@@ -20,7 +20,8 @@ const GraphQLJSON = require('graphql-type-json')
  * 3. See update
  * 
  * Milestone 2
- * 1. Put this in admin?
+ * 1. Make a wrapper in the frontend consumer of this which mimicks
+ *    the following API to some degree.
  * 
  * firebase.database().ref(`users/<userId>`).on('value', () => {})
  * firebase.database().ref(`users/<userId>`).once('value', () => {})
