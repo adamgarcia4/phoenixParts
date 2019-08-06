@@ -1,76 +1,112 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from 'react'
+import logo from './logo.svg'
+import './App.css'
 import { gql } from 'apollo-boost'
 import { Query } from 'react-apollo'
-import { typeIncompatibleAnonSpreadMessage } from 'graphql/validation/rules/PossibleFragmentSpreads';
-
+import ReactTable from 'react-table'
+import 'react-table/react-table.css'
 
 const query = gql`
   {
-    hi
+    users {
+      bank
+      desk
+      desk_id
+      email
+      first_name
+      last_name
+    }
   }
 `
 
 const subscription = gql`
   subscription {
-    somethingChanged {
-      id
+    usersChanged {
+      email
     }
   }
 `
 
 class App extends React.Component {
-  componentDidMount() {
-  }
-  
+  componentDidMount() {}
+
   render() {
-    return (<div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reloadsss.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+    return (
+      <div className="App">
+        <header className="App-header">
+          <img src={logo} className="App-logo" alt="logo" />
+          <p>
+            Edit <code>src/App.js</code> and save to reloadsss.
+          </p>
+          <a className="App-link" href="https://reactjs.org" target="_blank" rel="noopener noreferrer">
+            Learn React
+          </a>
 
-        <Query query={query}>
-          {({loading, error, data, subscribeToMore}) => {
-            if(loading) return <p>Loading...</p>
-            if(error) return <p>Error...</p>
+          <Query query={query}>
+            {({ loading, error, data, subscribeToMore }) => {
+              if (loading) return <p>Loading...</p>
+              if (error) return <p>Error...</p>
 
-            subscribeToMore({
-              document: subscription,
-              updateQuery: (prev, { subscriptionData }) => {
-                // console.log('prev:',prev)
-                // console.log('subscriptionData:',subscriptionData)
-                const { id } = subscriptionData.data.somethingChanged
-                console.log('id:',id)
-                
-                return {hi: id}
-                // return <p>{subscriptionData.data.somethingChanged.id}</p>
-              }
-            })
+              const { users } = data
 
-            // {more()}
+              console.log('users:',users)
+              
+              const columns = [
+                {
+                  Header: 'First Name',
+                  accessor: 'first_name',
+                  width: 300
+                },
+                {
+                  Header: 'Last Name',
+                  accessor: 'last_name',
+                  width: 300
+                },
+                {
+                  Header: 'Email',
+                  accessor: 'email',
+                  width: 300
+                },
+                {
+                  Header: 'Desk Id',
+                  accessor: 'desk_id',
+                  width: 300
+                },
+                {
+                  Header: 'Desk',
+                  accessor: 'desk',
+                  width: 300
+                },
+                {
+                  Header: 'Bank',
+                  accessor: 'bank',
+                  width: 300
+                }
+              ]
+              
+              subscribeToMore({
+                document: subscription,
+                updateQuery: (prev, updatedData) => {
+                  const { subscriptionData } = updatedData
+                  console.log('We are updating!!', updatedData)
+                  // console.log('prev:',prev)
+                  // console.log('subscriptionData:',subscriptionData)
+                  const user = subscriptionData.data.usersChanged
+                  
+                  console.log('user:',user)
+                  
+                  // TODO: Need to return the new users array here taking into account modifications.
+                  return JSON.stringify(user)
+                }
+              })
 
-            return data.hi
-          }}
-
-        </Query>
-
-
-
-      </header>
-    </div>
-  )
-    }
+              return <ReactTable data={users} columns={columns}/>
+            }}
+          </Query>
+        </header>
+      </div>
+    )
+  }
 }
 
-export default App;
+export default App

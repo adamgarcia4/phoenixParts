@@ -12,9 +12,23 @@ const GraphQLJSON = require('graphql-type-json')
 // })
 
 // goal is to replace admin page.
-// 1. Display users
-// 2. Change something in robo3T
-// 3. See update
+/**
+ *
+ * Milestone 1
+ * 1. Display users
+ * 2. Change something in robo3T
+ * 3. See update
+ * 
+ * Milestone 2
+ * 1. Put this in admin?
+ * 
+ * firebase.database().ref(`users/<userId>`).on('value', () => {})
+ * firebase.database().ref(`users/<userId>`).once('value', () => {})
+ * 
+ *  
+ */
+
+
 
 // Type definitions define the "shape" of your data and specify
 // which ways the data can be fetched from the GraphQL server.

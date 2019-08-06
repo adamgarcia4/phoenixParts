@@ -14,7 +14,7 @@ import { ApolloClient, InMemoryCache } from 'apollo-boost';
 
 
 const httpLink = new HttpLink({
-  uri: 'http://localhost:4000/graphql'
+  uri: 'http://localhost:4000/'
 })
 
 const wsLink = new WebSocketLink({
@@ -44,7 +44,6 @@ const client = new ApolloClient({
 })
 
 ReactDOM.render(<ApolloProvider client={client}>
-  
   <ApolloConsumer>
     {client => <App client={client}/>}
   </ApolloConsumer>
