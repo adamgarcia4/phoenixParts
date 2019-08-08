@@ -33,6 +33,24 @@ const GraphQLJSON = require('graphql-type-json')
 
 // Type definitions define the "shape" of your data and specify
 // which ways the data can be fetched from the GraphQL server.
+
+const trades = [
+  {
+    _id: '1',
+    user_id: '5d492cbfd225f21bd0c4ae87',
+    name: 'First trade evahhh!!!'
+  },
+  {
+    _id: '2',
+    user_id: '5d492cbfd225f21bd0c4ae87',
+    name: 'Second trade only :('
+  },
+  {
+    _id: '3',
+    user_id: '5d492cbfd225f21bd0c4ae88',
+    name: 'ANOTHER TRADE???'
+  },
+]
 const schemaString = gql`
   # Comments in GraphQL are defined with the hash (#) symbol.
 
@@ -44,18 +62,27 @@ const schemaString = gql`
     subscription: Subscription
   }
 
+  type Trade {
+    _id: String
+    user_id: String
+    name: String
+  }
+
   type User {
+    _id: String
     bank: String
     desk: String
     desk_id: String
     email: String
     first_name: String
     last_name: String
+    my_trades: [Trade]
   }
 
   type Query {
     hi: String
     users: [User]
+    trades: [Trade]
     # users: [JSON]
   }
 
@@ -81,11 +108,26 @@ const start = client => {
           .toArray()
 
         return users
+      },
+      trades: async (parent, args, context, info) => {
+        return trades
       }
     },
     Subscription: {
       usersChanged: {
         subscribe: () => pubsub.asyncIterator(USERS_CHANGED_TOPIC)
+      }
+    },
+    User: {
+      my_trades: (parent, args, context, info) => {
+        const { _id } = parent
+        console.log('parent:',parent)
+        
+        return trades.reduce((base, trade) => {
+          if(trade.user_id === _id) base.push(trade)
+
+          return base
+        },[])
       }
     },
     JSON: GraphQLJSON
