@@ -30,6 +30,8 @@ const GraphQLJSON = require('graphql-type-json')
  */
 
 
+let myUsers
+
 
 // Type definitions define the "shape" of your data and specify
 // which ways the data can be fetched from the GraphQL server.
@@ -51,11 +53,14 @@ const schemaString = gql`
     email: String
     first_name: String
     last_name: String
+    uid: String
+    _id:String
   }
 
   type Query {
     hi: String
     users: [User]
+    
     # users: [JSON]
   }
 
@@ -102,8 +107,24 @@ const start = client => {
 
   usersStream.on('change', ({ fullDocument }) => {
 
-    pubsub.publish(USERS_CHANGED_TOPIC, { usersChanged: fullDocument})
+    pubsub.publish(USERS_CHANGED_TOPIC, { usersChanged: fullDocument })
   })
+
+
+  const realtimeUsersListener = async () => {
+    myUsers = await usersCollection.find({}).toArray()
+
+    usersStream.on('change', ({ fullDocument }) => {
+      myUsers.forEach((user, index) => {
+        if (user.uid === fullDocument.uid) {
+          myUsers[index] = fullDocument;
+        }
+      });
+    })
+  }
+
+  realtimeUsersListener().then()
+
 
 
   // In the most basic sense, the ApolloServer can be started
@@ -120,8 +141,8 @@ const start = client => {
   // can utilize middleware options, which we'll discuss later.
 
   server.listen().then(({ subscriptionsUrl, url }) => {
-    console.log(`🚀 Server ready at ${url}`)
-    console.log(`🚀 Subscriptions ready at ${subscriptionsUrl}`)
+    console.log(`Server ready at ${url}`)
+    console.log(`Subscriptions ready at ${subscriptionsUrl}`)
   })
 }
 
