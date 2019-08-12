@@ -12,6 +12,7 @@
     "apollo-link-ws": "^1.0.18",
     "graphql": "^14.4.2",
     "graphql-tag": "^2.10.1",
+    "lodash": "^4.17.15",
     "material-table": "^1.48.0",
     "prop-types": "^15.7.2",
     "react": "^16.8.6",

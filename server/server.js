@@ -11,28 +11,6 @@ const GraphQLJSON = require('graphql-type-json')
 
 {/* <Card title='Part 1' body='Some quick example text to build on the card title and make up the bulk of the cards content.'/> */}
 
-const parts = [
-  {
-    name: 'Part 1',
-    number: '04-100-001',
-    status: 'not_ordered',
-    material: '6061 T6',
-    description: 'Some quick example text to build on the card title and make up the bulk of the cards content.',
-    quantity: 2,
-    total: 4
-  },
-  {
-    name: 'Part 2',
-    number: '04-100-002',
-    material: '6061 T6',
-    description: 'Some more text that I have just made up.',
-    status: 'ordered',
-    quantity: 1,
-    total: 3
-  },
-
-]
-
 const schemaString = gql`
   # Comments in GraphQL are defined with the hash (#) symbol.
 
@@ -46,7 +24,21 @@ const schemaString = gql`
     hi: String
     parts: [Part!]!
   }
+
+  type Mutation {
+    addPart(part: PartInput) : Part
+  }
  
+  input PartInput {
+    name: String
+    number: String
+    status: AllowedStatus
+    material: String
+    description: String
+    quantity: Int
+    total: Int
+  }
+
   type Part {
     name: String
     number: String
@@ -59,21 +51,28 @@ const schemaString = gql`
   }
 `
 
-// const SOMETHING_CHANGED_TOPIC = 'something_changed'
-// const USERS_CHANGED_TOPIC = 'users_changed'
-
-// Resolvers define the technique for fetching the types in the
-// schema.  We'll retrieve books from the "books" array above.
-
 // async (parent, args, context, info)
 const start = client => {
+  const db = client.db('test')
+
   const resolvers = {
     Query: {
       hi: () => 'hi',
-      parts: () => {
+      parts: async() => {
+        const parts = await db.collection('parts').find({}).toArray()
+
         return parts
       }
     },
+    Mutation: {
+      addPart: async (parent, args, context, info) => {
+        const { part } = args
+        
+        await db.collection('parts').insertOne(part)
+
+        return part
+      }
+    }
   }
 
   const usersCollection = client.db('sample').collection('users')

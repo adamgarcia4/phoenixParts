@@ -1,4 +1,4 @@
-const { startMongo } = require('./mongo')
+const { startMongo, client } = require('./mongo')
 
 const server = require('./server')
 
