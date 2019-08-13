@@ -4,6 +4,8 @@ const { RedisPubSub } = require('graphql-redis-subscriptions')
 const { makeExecutableSchema } = require('graphql-tools')
 const pubsub = new RedisPubSub()
 
+const mongodb = require('mongodb')
+
 const GraphQLJSON = require('graphql-type-json')
 
 // Type definitions define the "shape" of your data and specify
@@ -28,9 +30,11 @@ const schemaString = gql`
   type Mutation {
     partAdd(part: PartInput!) : Part
     partDelete(part: PartInput!): Part
+    partEdit(part: PartInput!): Part
   }
  
   input PartInput {
+    _id: String
     name: String
     number: String
     status: AllowedStatus
@@ -41,6 +45,7 @@ const schemaString = gql`
   }
 
   type Part {
+    _id: String
     name: String
     number: String
     status: AllowedStatus
@@ -69,16 +74,28 @@ const start = client => {
       partAdd: async (parent, args, context, info) => {
         const { part } = args
         
-        await db.collection('parts').insertOne(part)
+        const addedPart = await db.collection('parts').insertOne(part)
 
-        return part
+        return addedPart.ops[0]
       },
       partDelete: async (parent, args, context, info) => {
         const { part } = args
 
-        await db.collection('parts').deleteOne(part)
+        const deletedPart = await db.collection('parts').findOneAndDelete({
+          // TODO: Move _id to middleware
+          _id: new mongodb.ObjectId(part._id)
+        })
 
-        return part
+        return deletedPart
+      },
+      partEdit: async (parent, args, context, info) => {
+        const { part } = args
+        
+        const { _id, ...partProps } = part
+
+        const updatedPart = await db.collection('parts').findOneAndUpdate({ _id: new mongodb.ObjectID(_id) }, {$set: partProps}, {returnOriginal: false})
+
+        return updatedPart.value
         
       }
     }

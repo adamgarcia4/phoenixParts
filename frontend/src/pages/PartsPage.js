@@ -21,6 +21,7 @@ const columns = [
 const query = gql`
   {
     parts {
+      _id
       name
       number
       status
@@ -40,6 +41,16 @@ const addPartMutation = gql`
   }
 `
 
+const editPartMutation = gql`
+  mutation EDIT_PART($part:PartInput!) {
+    partEdit(part: $part) {
+      name
+      number
+      material
+    }
+  }
+`
+
 const deletePartMutation = gql`
   mutation DELETE_PART($part:PartInput!) {
     partDelete(part: $part) {
@@ -50,6 +61,7 @@ const deletePartMutation = gql`
 const PartsPage = () => {
   const { data, loading, refetch } = useQuery(query)
   const [addPart, { data: addPartData }] = useMutation(addPartMutation)
+  const [ editPart ] = useMutation(editPartMutation)
   const [ deletePart ] = useMutation(deletePartMutation)
 
   const { parts = [] } = data || {}
@@ -73,24 +85,20 @@ const PartsPage = () => {
           await refetch()
         },
         onRowUpdate: async (newData, oldData) => {
+          delete newData.__typename
+          await editPart({
+            variables: {part: newData}
+          })
 
-          const diff = difference(newData, oldData)
-          
-          console.log('newData:',newData)
-          console.log('oldData:',oldData)
-          console.log('diff:',diff)
-
-
+          refetch()
         },
         onRowDelete: async oldData => {
-          const { name, number } = oldData
-
-          const part = {
-            name, number
-          }
+          console.log('oldData:',oldData)
           
+          const { _id } = oldData
+
           await deletePart({ 
-            variables: { part } 
+            variables: { part: {_id} } 
           })
 
           await refetch()
