@@ -11,12 +11,13 @@ import _ from 'lodash'
 import MaterialTable from 'material-table'
 
 const columns = [
-  { title: 'Part Name', field: 'name' },
-  { title: 'Number', field: 'number' },
-  { title: 'Status', field: 'status' },
-  { title: 'quantity', field: 'quantity' },
-  { title: 'Total', field: 'total' }
+  { title: 'Part Name', field: 'name', initialEditValue: 'Part ' },
+  { title: 'Number', field: 'number' , initialEditValue: '04-100-10'},
+  { title: 'Status', field: 'status', initialEditValue: 'not_ordered'},
+  { title: 'quantity', field: 'quantity', initialEditValue: 1 },
+  { title: 'Total', field: 'total', initialEditValue: 2 }
 ]
+
 const query = gql`
   {
     parts {
@@ -30,17 +31,26 @@ const query = gql`
 `
 
 const addPartMutation = gql`
-  mutation ADD_PART($part:PartInput) {
-    addPart(part: $part) {
+  mutation ADD_PART($part:PartInput!) {
+    partAdd(part: $part) {
       name
       number
       material
     }
   }
 `
+
+const deletePartMutation = gql`
+  mutation DELETE_PART($part:PartInput!) {
+    partDelete(part: $part) {
+      name
+    }
+  }
+`
 const PartsPage = () => {
   const { data, loading, refetch } = useQuery(query)
   const [addPart, { data: addPartData }] = useMutation(addPartMutation)
+  const [ deletePart ] = useMutation(deletePartMutation)
 
   const { parts = [] } = data || {}
   return (
@@ -73,7 +83,17 @@ const PartsPage = () => {
 
         },
         onRowDelete: async oldData => {
+          const { name, number } = oldData
 
+          const part = {
+            name, number
+          }
+          
+          await deletePart({ 
+            variables: { part } 
+          })
+
+          await refetch()
         }
       }}
     />

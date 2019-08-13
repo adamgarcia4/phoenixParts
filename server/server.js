@@ -26,7 +26,8 @@ const schemaString = gql`
   }
 
   type Mutation {
-    addPart(part: PartInput) : Part
+    partAdd(part: PartInput!) : Part
+    partDelete(part: PartInput!): Part
   }
  
   input PartInput {
@@ -65,12 +66,20 @@ const start = client => {
       }
     },
     Mutation: {
-      addPart: async (parent, args, context, info) => {
+      partAdd: async (parent, args, context, info) => {
         const { part } = args
         
         await db.collection('parts').insertOne(part)
 
         return part
+      },
+      partDelete: async (parent, args, context, info) => {
+        const { part } = args
+
+        await db.collection('parts').deleteOne(part)
+
+        return part
+        
       }
     }
   }
