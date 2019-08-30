@@ -5,8 +5,9 @@ const { makeExecutableSchema } = require('graphql-tools')
 const pubsub = new RedisPubSub()
 
 const mongodb = require('mongodb')
-
 const GraphQLJSON = require('graphql-type-json')
+
+const { partModel } = require('./models')
 
 // Type definitions define the "shape" of your data and specify
 // which ways the data can be fetched from the GraphQL server.
@@ -25,12 +26,15 @@ const schemaString = gql`
   type Query {
     hi: String
     parts: [Part!]!
+    users: [User!]!
   }
 
   type Mutation {
     partAdd(part: PartInput!) : Part
     partDelete(part: PartInput!): Part
     partEdit(part: PartInput!): Part
+
+    userAdd(user: UserInput!): User
   }
  
   input PartInput {
@@ -42,6 +46,16 @@ const schemaString = gql`
     description: String
     quantity: Int
     total: Int
+  }
+
+  input UserInput {
+    _id: String
+    name: String
+  }
+
+  type User {
+    _id: String
+    name: String
   }
 
   type Part {
@@ -57,26 +71,42 @@ const schemaString = gql`
   }
 `
 
+const users = [
+  {
+    _id: '1',
+    name: 'Adam'
+  },
+  {
+    _id: '2',
+    name: 'Maddy'
+  }
+]
 // async (parent, args, context, info)
 const start = client => {
-  const db = client.db('test')
+  const db = {}
 
   const resolvers = {
     Query: {
       hi: () => 'hi',
       parts: async() => {
-        const parts = await db.collection('parts').find({}).toArray()
+        const parts = await partModel.find()
 
         return parts
+      },
+      users: async() => {
+        const users = await db.collection('users').find({}).toArray()
+        return users
       }
     },
     Mutation: {
       partAdd: async (parent, args, context, info) => {
         const { part } = args
         
-        const addedPart = await db.collection('parts').insertOne(part)
+        const addedPart = await partModel.create(part)
 
-        return addedPart.ops[0]
+        console.log('addedPart:',addedPart)
+        
+        return addedPart
       },
       partDelete: async (parent, args, context, info) => {
         const { part } = args
@@ -97,24 +127,32 @@ const start = client => {
 
         return updatedPart.value
         
+      },
+
+      userAdd: async (parent, args, context, info) => {
+        const { user } = args
+
+        const addedUser = await db.collection('users').insertOne(user)
+
+        return addedUser.ops[0]
       }
     }
   }
 
-  const usersCollection = client.db('sample').collection('users')
+  // const usersCollection = client.db('sample').collection('users')
 
-  const usersStream = usersCollection.watch()
+  // const usersStream = usersCollection.watch()
 
-  usersStream.on('change', ({ fullDocument }) => {
+  // usersStream.on('change', ({ fullDocument }) => {
 
-    pubsub.publish(USERS_CHANGED_TOPIC, { usersChanged: fullDocument })
-  })
+  //   pubsub.publish(USERS_CHANGED_TOPIC, { usersChanged: fullDocument })
+  // })
 
   // In the most basic sense, the ApolloServer can be started
   // by passing type definitions (typeDefs) and the resolvers
   // responsible for fetching the data for those types.
   const server = new ApolloServer({ typeDefs: schemaString, resolvers })
-
+  
   server.listen().then(({ subscriptionsUrl, url }) => {
     console.log(`Server ready at ${url}`)
     console.log(`Subscriptions ready at ${subscriptionsUrl}`)

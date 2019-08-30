@@ -1,5 +1,6 @@
-const { startMongo, client } = require('./mongo')
+const { startMongo } = require('./mongo')
 
 const server = require('./server')
 
-startMongo(client => server.start(client))
+server.start()
+// startMongo(client => server.start())
